@@ -12,6 +12,7 @@ export const searchApi = {
   askKnowledgeBase: async (params: AskRequest) => {
     // Get auth token using the same logic as apiClient interceptor
     let token = null
+    let language: string | null = null
     if (typeof window !== 'undefined') {
       const authStorage = localStorage.getItem('auth-storage')
       if (authStorage) {
@@ -22,6 +23,18 @@ export const searchApi = {
           }
         } catch (error) {
           console.error('Error parsing auth storage:', error)
+        }
+      }
+
+      const languageStorage = localStorage.getItem('language-storage')
+      if (languageStorage) {
+        try {
+          const { state } = JSON.parse(languageStorage)
+          if (state?.language === 'zh-CN' || state?.language === 'en') {
+            language = state.language
+          }
+        } catch (error) {
+          console.error('Error parsing language storage:', error)
         }
       }
     }
@@ -35,6 +48,7 @@ export const searchApi = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(language && { 'Accept-Language': language }),
         ...(token && { Authorization: `Bearer ${token}` })
       },
       body: JSON.stringify(params)

@@ -20,6 +20,7 @@ import { searchApi } from '@/lib/api/search'
 import { sourcesApi } from '@/lib/api/sources'
 import { useSources, useAddSourcesToNotebook } from '@/lib/hooks/use-sources'
 import { SourceListResponse } from '@/lib/types/api'
+import { useT } from '@/i18n'
 
 interface AddExistingSourceDialogProps {
   open: boolean
@@ -34,6 +35,7 @@ export function AddExistingSourceDialog({
   notebookId,
   onSuccess,
 }: AddExistingSourceDialogProps) {
+  const { t, language } = useT()
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300)
   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([])
@@ -93,7 +95,7 @@ export function AddExistingSourceDialog({
       // the API only returns sources, no need to filter
       const sources = response.results.map(r => ({
         id: r.parent_id,
-        title: r.title || 'Untitled',
+        title: r.title || t('sources.untitled'),
         topics: [],
         asset: null,
         embedded: false,
@@ -111,7 +113,7 @@ export function AddExistingSourceDialog({
     } finally {
       setIsSearching(false)
     }
-  }, [debouncedSearchQuery, allSources])
+  }, [debouncedSearchQuery, allSources, t])
 
   // Load all sources initially
   useEffect(() => {
@@ -172,7 +174,7 @@ export function AddExistingSourceDialog({
 
   const formatDate = (dateString: string) => {
     try {
-      return new Date(dateString).toLocaleDateString()
+      return new Date(dateString).toLocaleDateString(language)
     } catch {
       return ''
     }
@@ -184,10 +186,10 @@ export function AddExistingSourceDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Link2 className="h-5 w-5" />
-            Add Existing Sources
+            {t('sources.add_existing.title')}
           </DialogTitle>
           <DialogDescription>
-            Search and select existing sources to add to this notebook
+            {t('sources.add_existing.desc')}
           </DialogDescription>
         </DialogHeader>
 
@@ -196,7 +198,7 @@ export function AddExistingSourceDialog({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search sources..."
+              placeholder={t('sources.add_existing.search_placeholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -211,12 +213,12 @@ export function AddExistingSourceDialog({
             {isSearching && filteredSources.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground">
                 <LoaderIcon className="h-12 w-12 mb-2 animate-spin" />
-                <p>Loading sources...</p>
+                <p>{t('sources.add_existing.loading')}</p>
               </div>
             ) : filteredSources.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground">
                 <FileText className="h-12 w-12 mb-2 opacity-50" />
-                <p>No sources found</p>
+                <p>{t('sources.add_existing.empty')}</p>
               </div>
             ) : (
               <div className="space-y-2 p-4">
@@ -247,12 +249,12 @@ export function AddExistingSourceDialog({
                           </h4>
                           {isAlreadyLinked && (
                             <Badge variant="secondary" className="text-xs shrink-0">
-                              Linked
+                              {t('sources.add_existing.linked')}
                             </Badge>
                           )}
                         </div>
                         <p className="text-xs text-muted-foreground truncate">
-                          Added {formatDate(source.created)}
+                          {t('sources.add_existing.added', { date: formatDate(source.created) })}
                         </p>
                       </div>
                     </div>
@@ -265,14 +267,17 @@ export function AddExistingSourceDialog({
           {/* Truncation Warning */}
           {allSources.length >= 100 && !debouncedSearchQuery && (
             <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded-md">
-              Showing first 100 sources. Use the Search feature to find specific sources.
+              {t('sources.add_existing.truncated_hint')}
             </div>
           )}
 
           {/* Selection Summary */}
           {selectedSourceIds.length > 0 && (
             <div className="text-sm text-muted-foreground">
-              {selectedSourceIds.length} source{selectedSourceIds.length > 1 ? 's' : ''} selected
+              {t('sources.add_existing.selected', {
+                count: selectedSourceIds.length,
+                s: selectedSourceIds.length > 1 ? 's' : '',
+              })}
             </div>
           )}
         </div>
@@ -283,7 +288,7 @@ export function AddExistingSourceDialog({
             onClick={() => onOpenChange(false)}
             disabled={addSources.isPending}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={handleAddSelected}
@@ -292,10 +297,10 @@ export function AddExistingSourceDialog({
             {addSources.isPending ? (
               <>
                 <LoaderIcon className="mr-2 h-4 w-4 animate-spin" />
-                Adding...
+                {t('sources.add_existing.adding')}
               </>
             ) : (
-              <>Add Selected</>
+              <>{t('sources.add_existing.add_selected')}</>
             )}
           </Button>
         </DialogFooter>

@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { useCreateModel } from '@/lib/hooks/use-models'
 import { Plus } from 'lucide-react'
+import { useT } from '@/i18n'
 
 interface AddModelFormProps {
   modelType: 'language' | 'embedding' | 'text_to_speech' | 'speech_to_text'
@@ -17,6 +18,7 @@ interface AddModelFormProps {
 }
 
 export function AddModelForm({ modelType, providers }: AddModelFormProps) {
+  const { t } = useT()
   const [open, setOpen] = useState(false)
   const createModel = useCreateModel()
   const { register, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<CreateModelRequest>({
@@ -37,28 +39,37 @@ export function AddModelForm({ modelType, providers }: AddModelFormProps) {
   }
 
   const getModelTypeName = () => {
-    return modelType.replace(/_/g, ' ')
+    switch (modelType) {
+      case 'language':
+        return t('models.type_name.language')
+      case 'embedding':
+        return t('models.type_name.embedding')
+      case 'text_to_speech':
+        return t('models.type_name.tts')
+      case 'speech_to_text':
+        return t('models.type_name.stt')
+    }
   }
 
   const getModelPlaceholder = () => {
     switch (modelType) {
       case 'language':
-        return 'e.g., gpt-5-mini, claude, gemini'
+        return t('models.add_model.placeholder.language')
       case 'embedding':
-        return 'e.g., text-embedding-3-small'
+        return t('models.add_model.placeholder.embedding')
       case 'text_to_speech':
-        return 'e.g., tts-gpt-4o-mini-tts, tts-1-hd'
+        return t('models.add_model.placeholder.tts')
       case 'speech_to_text':
-        return 'e.g., whisper-1'
+        return t('models.add_model.placeholder.stt')
       default:
-        return 'Enter model name'
+        return t('models.add_model.placeholder.fallback')
     }
   }
 
   if (availableProviders.length === 0) {
     return (
       <div className="text-sm text-muted-foreground">
-        No providers available for {getModelTypeName()} models
+        {t('models.add_model.no_providers', { type: getModelTypeName() })}
       </div>
     )
   }
@@ -75,22 +86,22 @@ export function AddModelForm({ modelType, providers }: AddModelFormProps) {
       <DialogTrigger asChild>
         <Button size="sm">
           <Plus className="h-4 w-4 mr-2" />
-          Add Model
+          {t('models.add_model.open')}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add {getModelTypeName()} Model</DialogTitle>
+          <DialogTitle>{t('models.add_model.title', { type: getModelTypeName() })}</DialogTitle>
           <DialogDescription>
-            Configure a new {getModelTypeName()} model from available providers.
+            {t('models.add_model.desc', { type: getModelTypeName() })}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <Label htmlFor="provider">Provider</Label>
+            <Label htmlFor="provider">{t('models.add_model.provider.label')}</Label>
             <Select onValueChange={(value) => setValue('provider', value)} required>
               <SelectTrigger>
-                <SelectValue placeholder="Select a provider" />
+                <SelectValue placeholder={t('models.add_model.provider.placeholder')} />
               </SelectTrigger>
               <SelectContent>
                 {availableProviders.map((provider) => (
@@ -101,15 +112,15 @@ export function AddModelForm({ modelType, providers }: AddModelFormProps) {
               </SelectContent>
             </Select>
             {errors.provider && (
-              <p className="text-sm text-destructive mt-1">Provider is required</p>
+              <p className="text-sm text-destructive mt-1">{t('models.add_model.validation.provider_required')}</p>
             )}
           </div>
 
           <div>
-            <Label htmlFor="name">Model Name</Label>
+            <Label htmlFor="name">{t('models.add_model.name.label')}</Label>
             <Input
               id="name"
-              {...register('name', { required: 'Model name is required' })}
+              {...register('name', { required: t('models.add_model.validation.name_required') })}
               placeholder={getModelPlaceholder()}
             />
             {errors.name && (
@@ -117,16 +128,16 @@ export function AddModelForm({ modelType, providers }: AddModelFormProps) {
             )}
             <p className="text-xs text-muted-foreground mt-1">
               {modelType === 'language' && watch('provider') === 'azure' &&
-                'For Azure, use the deployment name as the model name'}
+                t('models.add_model.azure_hint')}
             </p>
           </div>
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={createModel.isPending}>
-              {createModel.isPending ? 'Adding...' : 'Add Model'}
+              {createModel.isPending ? t('models.add_model.adding') : t('models.add_model.submit')}
             </Button>
           </div>
         </form>

@@ -7,8 +7,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { ChevronDown, ChevronRight, Settings } from 'lucide-react'
 import { useDefaultPrompt, useUpdateDefaultPrompt } from '@/lib/hooks/use-transformations'
+import { useT } from '@/i18n'
 
 export function DefaultPromptEditor() {
+  const { t } = useT()
   const [isOpen, setIsOpen] = useState(false)
   const [prompt, setPrompt] = useState('')
   const { data: defaultPrompt, isLoading } = useDefaultPrompt()
@@ -33,9 +35,9 @@ export function DefaultPromptEditor() {
               <div className="flex items-center gap-2">
                 <Settings className="h-5 w-5" />
                 <div className="text-left">
-                  <CardTitle className="text-lg">Default Transformation Prompt</CardTitle>
+                  <CardTitle className="text-lg">{t('transformations.default_prompt.title')}</CardTitle>
                   <CardDescription>
-                    This will be added to all your transformation prompts
+                    {t('transformations.default_prompt.desc')}
                   </CardDescription>
                 </div>
               </div>
@@ -52,7 +54,7 @@ export function DefaultPromptEditor() {
             <Textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Enter your default transformation instructions..."
+              placeholder={t('transformations.default_prompt.placeholder')}
               className="min-h-[200px] font-mono text-sm"
               disabled={isLoading}
             />
@@ -61,7 +63,7 @@ export function DefaultPromptEditor() {
                 onClick={handleSave}
                 disabled={isLoading || updateDefaultPrompt.isPending}
               >
-                Save
+                {t('common.save')}
               </Button>
             </div>
           </CardContent>

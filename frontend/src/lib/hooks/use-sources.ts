@@ -3,6 +3,8 @@ import { useCallback, useMemo } from 'react'
 import { sourcesApi } from '@/lib/api/sources'
 import { QUERY_KEYS } from '@/lib/api/query-client'
 import { useToast } from '@/lib/hooks/use-toast'
+import { t as translate } from '@/i18n'
+import { useLanguageStore } from '@/lib/stores/language-store'
 import {
   CreateSourceRequest,
   UpdateSourceRequest,
@@ -290,6 +292,7 @@ export function useAddSourcesToNotebook() {
       return { successes, failures, total: sourceIds.length }
     },
     onSuccess: (result, { notebookId, sourceIds }) => {
+      const language = useLanguageStore.getState().language
       // Invalidate ALL sources queries to refresh all lists
       queryClient.invalidateQueries({ queryKey: ['sources'] })
       // Specifically invalidate the notebook's sources
@@ -302,27 +305,35 @@ export function useAddSourcesToNotebook() {
       // Show appropriate toast based on results
       if (result.failures === 0) {
         toast({
-          title: 'Success',
-          description: `${result.successes} source${result.successes > 1 ? 's' : ''} added to notebook`,
+          title: translate(language, 'toast.success'),
+          description: translate(language, 'sources.toast.added_to_notebook', {
+            count: result.successes,
+            s: result.successes > 1 ? 's' : '',
+          }),
         })
       } else if (result.successes === 0) {
         toast({
-          title: 'Error',
-          description: 'Failed to add sources to notebook',
+          title: translate(language, 'toast.error'),
+          description: translate(language, 'sources.toast.add_failed'),
           variant: 'destructive',
         })
       } else {
         toast({
-          title: 'Partial Success',
-          description: `${result.successes} source${result.successes > 1 ? 's' : ''} added, ${result.failures} failed`,
+          title: translate(language, 'toast.partial_success'),
+          description: translate(language, 'sources.toast.add_partial', {
+            success: result.successes,
+            failed: result.failures,
+            s: result.successes > 1 ? 's' : '',
+          }),
           variant: 'default',
         })
       }
     },
     onError: () => {
+      const language = useLanguageStore.getState().language
       toast({
-        title: 'Error',
-        description: 'Failed to add sources to notebook',
+        title: translate(language, 'toast.error'),
+        description: translate(language, 'sources.toast.add_failed'),
         variant: 'destructive',
       })
     },
@@ -340,6 +351,7 @@ export function useRemoveSourceFromNotebook() {
       return notebooksApi.removeSource(notebookId, sourceId)
     },
     onSuccess: (_, { notebookId, sourceId }) => {
+      const language = useLanguageStore.getState().language
       // Invalidate ALL sources queries to refresh all lists
       queryClient.invalidateQueries({ queryKey: ['sources'] })
       // Specifically invalidate the notebook's sources
@@ -348,14 +360,15 @@ export function useRemoveSourceFromNotebook() {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.source(sourceId) })
 
       toast({
-        title: 'Success',
-        description: 'Source removed from notebook successfully',
+        title: translate(language, 'toast.success'),
+        description: translate(language, 'sources.toast.removed_from_notebook'),
       })
     },
     onError: () => {
+      const language = useLanguageStore.getState().language
       toast({
-        title: 'Error',
-        description: 'Failed to remove source from notebook',
+        title: translate(language, 'toast.error'),
+        description: translate(language, 'sources.toast.remove_failed'),
         variant: 'destructive',
       })
     },

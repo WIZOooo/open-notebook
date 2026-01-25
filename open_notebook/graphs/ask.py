@@ -21,6 +21,7 @@ class SubGraphState(TypedDict):
     results: dict
     answer: str
     ids: list  # Added for provide_answer function
+    output_language_instruction: str
 
 
 class Search(BaseModel):
@@ -43,6 +44,7 @@ class ThreadState(TypedDict):
     strategy: Strategy
     answers: Annotated[list, operator.add]
     final_answer: str
+    output_language_instruction: str
 
 
 async def call_model_with_messages(state: ThreadState, config: RunnableConfig) -> dict:

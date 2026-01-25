@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Header, HTTPException
 from loguru import logger
 
 from api.models import (
@@ -16,6 +16,10 @@ from open_notebook.ai.models import Model
 from open_notebook.domain.transformation import DefaultPrompts, Transformation
 from open_notebook.exceptions import InvalidInputError
 from open_notebook.graphs.transformation import graph as transformation_graph
+from open_notebook.utils.language_utils import (
+    build_output_language_instruction,
+    parse_output_language,
+)
 
 router = APIRouter()
 
@@ -79,7 +83,10 @@ async def create_transformation(transformation_data: TransformationCreate):
 
 
 @router.post("/transformations/execute", response_model=TransformationExecuteResponse)
-async def execute_transformation(execute_request: TransformationExecuteRequest):
+async def execute_transformation(
+    execute_request: TransformationExecuteRequest,
+    accept_language: str | None = Header(None, alias="Accept-Language"),
+):
     """Execute a transformation on input text."""
     try:
         # Validate transformation exists
@@ -93,10 +100,13 @@ async def execute_transformation(execute_request: TransformationExecuteRequest):
             raise HTTPException(status_code=404, detail="Model not found")
 
         # Execute the transformation
+        output_language = parse_output_language(accept_language)
+        output_language_instruction = build_output_language_instruction(output_language)
         result = await transformation_graph.ainvoke(
             dict(  # type: ignore[arg-type]
                 input_text=execute_request.input_text,
                 transformation=transformation,
+                output_language_instruction=output_language_instruction,
             ),
             config=dict(configurable={"model_id": execute_request.model_id}),
         )

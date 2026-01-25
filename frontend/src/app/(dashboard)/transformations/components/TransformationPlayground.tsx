@@ -13,6 +13,7 @@ import { useExecuteTransformation } from '@/lib/hooks/use-transformations'
 import { ModelSelector } from '@/components/common/ModelSelector'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { useT } from '@/i18n'
 
 interface TransformationPlaygroundProps {
   transformations: Transformation[] | undefined
@@ -20,6 +21,7 @@ interface TransformationPlaygroundProps {
 }
 
 export function TransformationPlayground({ transformations, selectedTransformation }: TransformationPlaygroundProps) {
+  const { t } = useT()
   const [selectedId, setSelectedId] = useState(selectedTransformation?.id || '')
   const [inputText, setInputText] = useState('')
   const [modelId, setModelId] = useState('')
@@ -47,18 +49,18 @@ export function TransformationPlayground({ transformations, selectedTransformati
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Playground</CardTitle>
+          <CardTitle>{t('transformations.playground.title')}</CardTitle>
           <CardDescription>
-            Test your transformations on sample text before applying them to your sources
+            {t('transformations.playground.desc')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="transformation">Transformation</Label>
+              <Label htmlFor="transformation">{t('transformations.playground.transformation')}</Label>
               <Select value={selectedId} onValueChange={setSelectedId}>
                 <SelectTrigger id="transformation">
-                  <SelectValue placeholder="Select a transformation" />
+                  <SelectValue placeholder={t('transformations.playground.select_transformation')} />
                 </SelectTrigger>
                 <SelectContent>
                   {transformations?.map((transformation) => (
@@ -72,22 +74,22 @@ export function TransformationPlayground({ transformations, selectedTransformati
 
             <div>
               <ModelSelector
-                label="Model"
+                label={t('chat.model')}
                 modelType="language"
                 value={modelId}
                 onChange={setModelId}
-                placeholder="Select a model"
+                placeholder={t('chat.model_config.select_placeholder')}
               />
             </div>
           </div>
 
           <div>
-            <Label htmlFor="input">Input Text</Label>
+            <Label htmlFor="input">{t('transformations.playground.input')}</Label>
             <Textarea
               id="input"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder="Enter some text to transform..."
+              placeholder={t('transformations.playground.input_placeholder')}
               rows={8}
               className="font-mono text-sm"
             />
@@ -102,12 +104,12 @@ export function TransformationPlayground({ transformations, selectedTransformati
               {executeTransformation.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Running...
+                  {t('common.running')}
                 </>
               ) : (
                 <>
                   <Play className="h-4 w-4 mr-2" />
-                  Run Transformation
+                  {t('transformations.playground.run')}
                 </>
               )}
             </Button>
@@ -115,7 +117,7 @@ export function TransformationPlayground({ transformations, selectedTransformati
 
           {output && (
             <div className="space-y-2">
-              <Label>Output</Label>
+              <Label>{t('transformations.playground.output')}</Label>
               <Card>
                 <ScrollArea className="h-[400px]">
                   <CardContent className="pt-6">

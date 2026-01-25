@@ -8,7 +8,9 @@ import { Archive, ArchiveRestore, Trash2 } from 'lucide-react'
 import { useUpdateNotebook, useDeleteNotebook } from '@/lib/hooks/use-notebooks'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { formatDistanceToNow } from 'date-fns'
+import { zhCN } from 'date-fns/locale'
 import { InlineEdit } from '@/components/common/InlineEdit'
+import { useT } from '@/i18n'
 
 interface NotebookHeaderProps {
   notebook: NotebookResponse
@@ -19,6 +21,7 @@ export function NotebookHeader({ notebook }: NotebookHeaderProps) {
   
   const updateNotebook = useUpdateNotebook()
   const deleteNotebook = useDeleteNotebook()
+  const { t, language } = useT()
 
   const handleUpdateName = async (name: string) => {
     if (!name || name === notebook.name) return
@@ -61,10 +64,10 @@ export function NotebookHeader({ notebook }: NotebookHeaderProps) {
                 onSave={handleUpdateName}
                 className="text-2xl font-bold"
                 inputClassName="text-2xl font-bold"
-                placeholder="Notebook name"
+                placeholder={t('notebooks.header.name_placeholder')}
               />
               {notebook.archived && (
-                <Badge variant="secondary">Archived</Badge>
+                <Badge variant="secondary">{t('notebook.badge.archived')}</Badge>
               )}
             </div>
             <div className="flex gap-2">
@@ -76,12 +79,12 @@ export function NotebookHeader({ notebook }: NotebookHeaderProps) {
                 {notebook.archived ? (
                   <>
                     <ArchiveRestore className="h-4 w-4 mr-2" />
-                    Unarchive
+                    {t('common.unarchive')}
                   </>
                 ) : (
                   <>
                     <Archive className="h-4 w-4 mr-2" />
-                    Archive
+                    {t('common.archive')}
                   </>
                 )}
               </Button>
@@ -92,7 +95,7 @@ export function NotebookHeader({ notebook }: NotebookHeaderProps) {
                 className="text-red-600 hover:text-red-700"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                Delete
+                {t('common.delete')}
               </Button>
             </div>
           </div>
@@ -102,14 +105,14 @@ export function NotebookHeader({ notebook }: NotebookHeaderProps) {
             onSave={handleUpdateDescription}
             className="text-muted-foreground"
             inputClassName="text-muted-foreground"
-            placeholder="Add a description..."
+            placeholder={t('notebooks.header.description_placeholder')}
             multiline
-            emptyText="Add a description..."
+            emptyText={t('notebooks.header.description_placeholder')}
           />
           
           <div className="text-sm text-muted-foreground">
-            Created {formatDistanceToNow(new Date(notebook.created), { addSuffix: true })} • 
-            Updated {formatDistanceToNow(new Date(notebook.updated), { addSuffix: true })}
+            {t('common.created')} {formatDistanceToNow(new Date(notebook.created), { addSuffix: true, locale: language === 'zh-CN' ? zhCN : undefined })} • 
+            {t('common.updated')} {formatDistanceToNow(new Date(notebook.updated), { addSuffix: true, locale: language === 'zh-CN' ? zhCN : undefined })}
           </div>
         </div>
       </div>
@@ -117,9 +120,9 @@ export function NotebookHeader({ notebook }: NotebookHeaderProps) {
       <ConfirmDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
-        title="Delete Notebook"
-        description={`Are you sure you want to delete "${notebook.name}"? This action cannot be undone and will delete all sources, notes, and chat sessions.`}
-        confirmText="Delete Forever"
+        title={t('notebook.delete.title')}
+        description={t('notebook.delete.desc', { name: notebook.name })}
+        confirmText={t('common.delete_forever')}
         confirmVariant="destructive"
         onConfirm={handleDelete}
       />

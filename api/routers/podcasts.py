@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import List, Optional
 from urllib.parse import unquote, urlparse
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Header, HTTPException
 from fastapi.responses import FileResponse
 from loguru import logger
 from pydantic import BaseModel
@@ -11,6 +11,10 @@ from api.podcast_service import (
     PodcastGenerationRequest,
     PodcastGenerationResponse,
     PodcastService,
+)
+from open_notebook.utils.language_utils import (
+    build_output_language_instruction,
+    parse_output_language,
 )
 
 router = APIRouter()
@@ -38,19 +42,29 @@ def _resolve_audio_path(audio_file: str) -> Path:
 
 
 @router.post("/podcasts/generate", response_model=PodcastGenerationResponse)
-async def generate_podcast(request: PodcastGenerationRequest):
+async def generate_podcast(
+    request: PodcastGenerationRequest,
+    accept_language: str | None = Header(None, alias="Accept-Language"),
+):
     """
     Generate a podcast episode using Episode Profiles.
     Returns immediately with job ID for status tracking.
     """
     try:
+        output_language = parse_output_language(accept_language)
+        output_language_instruction = build_output_language_instruction(output_language)
+        briefing_suffix = (request.briefing_suffix or "").strip()
+        if briefing_suffix:
+            briefing_suffix = f"{briefing_suffix}\n\n{output_language_instruction}"
+        else:
+            briefing_suffix = output_language_instruction
         job_id = await PodcastService.submit_generation_job(
             episode_profile_name=request.episode_profile,
             speaker_profile_name=request.speaker_profile,
             episode_name=request.episode_name,
             notebook_id=request.notebook_id,
             content=request.content,
-            briefing_suffix=request.briefing_suffix,
+            briefing_suffix=briefing_suffix,
         )
 
         return PodcastGenerationResponse(

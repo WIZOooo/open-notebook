@@ -35,6 +35,19 @@ apiClient.interceptors.request.use(async (config) => {
         console.error('Error parsing auth storage:', error)
       }
     }
+
+    const languageStorage = localStorage.getItem('language-storage')
+    if (languageStorage) {
+      try {
+        const { state } = JSON.parse(languageStorage)
+        const language = state?.language
+        if (language === 'zh-CN' || language === 'en') {
+          config.headers['Accept-Language'] = language
+        }
+      } catch (error) {
+        console.error('Error parsing language storage:', error)
+      }
+    }
   }
 
   // Handle FormData vs JSON content types

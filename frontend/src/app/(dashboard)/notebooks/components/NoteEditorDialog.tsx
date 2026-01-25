@@ -12,13 +12,14 @@ import { QUERY_KEYS } from '@/lib/api/query-client'
 import { MarkdownEditor } from '@/components/ui/markdown-editor'
 import { InlineEdit } from '@/components/common/InlineEdit'
 import { cn } from "@/lib/utils";
+import { useT } from '@/i18n'
 
-const createNoteSchema = z.object({
+const createNoteSchema = (t: (key: string, values?: Record<string, string | number | boolean | null | undefined>) => string) => z.object({
   title: z.string().optional(),
-  content: z.string().min(1, 'Content is required'),
+  content: z.string().min(1, t('notes.editor.validation.content_required')),
 })
 
-type CreateNoteFormData = z.infer<typeof createNoteSchema>
+type CreateNoteFormData = z.infer<ReturnType<typeof createNoteSchema>>
 
 interface NoteEditorDialogProps {
   open: boolean
@@ -28,6 +29,7 @@ interface NoteEditorDialogProps {
 }
 
 export function NoteEditorDialog({ open, onOpenChange, notebookId, note }: NoteEditorDialogProps) {
+  const { t } = useT()
   const createNote = useCreateNote()
   const updateNote = useUpdateNote()
   const queryClient = useQueryClient()
@@ -47,7 +49,7 @@ export function NoteEditorDialog({ open, onOpenChange, notebookId, note }: NoteE
     reset,
     setValue,
   } = useForm<CreateNoteFormData>({
-    resolver: zodResolver(createNoteSchema),
+    resolver: zodResolver(createNoteSchema(t)),
     defaultValues: {
       title: '',
       content: '',
@@ -122,12 +124,12 @@ export function NoteEditorDialog({ open, onOpenChange, notebookId, note }: NoteE
           isEditorFullscreen && "!max-w-screen !max-h-screen border-none w-screen h-screen"
       )}>
         <DialogTitle className="sr-only">
-          {isEditing ? 'Edit note' : 'Create note'}
+          {isEditing ? t('notes.editor.edit_title') : t('notes.editor.create_title')}
         </DialogTitle>
         <form onSubmit={handleSubmit(onSubmit)} className="flex h-full flex-col">
           {isEditing && noteLoading ? (
             <div className="flex-1 flex items-center justify-center py-10">
-              <span className="text-sm text-muted-foreground">Loading note…</span>
+              <span className="text-sm text-muted-foreground">{t('notes.editor.loading')}</span>
             </div>
           ) : (
             <>
@@ -135,8 +137,8 @@ export function NoteEditorDialog({ open, onOpenChange, notebookId, note }: NoteE
                 <InlineEdit
                   value={watchTitle ?? ''}
                   onSave={(value) => setValue('title', value || '')}
-                  placeholder="Add a title..."
-                  emptyText="Untitled Note"
+                  placeholder={t('notes.editor.title.placeholder')}
+                  emptyText={t('notes.editor.title.untitled')}
                   className="text-xl font-semibold"
                   inputClassName="text-xl font-semibold"
                 />
@@ -155,7 +157,7 @@ export function NoteEditorDialog({ open, onOpenChange, notebookId, note }: NoteE
                       value={field.value}
                       onChange={field.onChange}
                       height={420}
-                      placeholder="Write your note content here..."
+                      placeholder={t('notes.editor.content.placeholder')}
                       className={cn(
                           "w-full h-full min-h-[420px] [&_.w-md-editor]:!static [&_.w-md-editor]:!w-full [&_.w-md-editor]:!h-full",
                           !isEditorFullscreen && "rounded-md border"
@@ -172,17 +174,17 @@ export function NoteEditorDialog({ open, onOpenChange, notebookId, note }: NoteE
 
           <div className="border-t px-6 py-4 flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               type="submit"
               disabled={isSaving || (isEditing && noteLoading)}
             >
               {isSaving
-                ? isEditing ? 'Saving...' : 'Creating...'
+                ? isEditing ? t('common.saving') : t('common.creating')
                 : isEditing
-                  ? 'Save Note'
-                  : 'Create Note'}
+                  ? t('notes.editor.save')
+                  : t('notes.editor.create')}
             </Button>
           </div>
         </form>

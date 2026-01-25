@@ -1,7 +1,7 @@
 import json
 from typing import AsyncGenerator
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Header, HTTPException
 from fastapi.responses import StreamingResponse
 from loguru import logger
 
@@ -10,6 +10,10 @@ from open_notebook.ai.models import Model, model_manager
 from open_notebook.domain.notebook import text_search, vector_search
 from open_notebook.exceptions import DatabaseOperationError, InvalidInputError
 from open_notebook.graphs.ask import graph as ask_graph
+from open_notebook.utils.language_utils import (
+    build_output_language_instruction,
+    parse_output_language,
+)
 
 router = APIRouter()
 
@@ -59,14 +63,21 @@ async def search_knowledge_base(search_request: SearchRequest):
 
 
 async def stream_ask_response(
-    question: str, strategy_model: Model, answer_model: Model, final_answer_model: Model
+    question: str,
+    strategy_model: Model,
+    answer_model: Model,
+    final_answer_model: Model,
+    output_language_instruction: str,
 ) -> AsyncGenerator[str, None]:
     """Stream the ask response as Server-Sent Events."""
     try:
         final_answer = None
 
         async for chunk in ask_graph.astream(
-            input=dict(question=question),  # type: ignore[arg-type]
+            input=dict(
+                question=question,
+                output_language_instruction=output_language_instruction,
+            ),  # type: ignore[arg-type]
             config=dict(
                 configurable=dict(
                     strategy_model=strategy_model.id,
@@ -108,7 +119,10 @@ async def stream_ask_response(
 
 
 @router.post("/search/ask")
-async def ask_knowledge_base(ask_request: AskRequest):
+async def ask_knowledge_base(
+    ask_request: AskRequest,
+    accept_language: str | None = Header(None, alias="Accept-Language"),
+):
     """Ask the knowledge base a question using AI models."""
     try:
         # Validate models exist
@@ -140,9 +154,15 @@ async def ask_knowledge_base(ask_request: AskRequest):
             )
 
         # For streaming response
+        output_language = parse_output_language(accept_language)
+        output_language_instruction = build_output_language_instruction(output_language)
         return StreamingResponse(
             stream_ask_response(
-                ask_request.question, strategy_model, answer_model, final_answer_model
+                ask_request.question,
+                strategy_model,
+                answer_model,
+                final_answer_model,
+                output_language_instruction,
             ),
             media_type="text/plain",
         )
@@ -155,7 +175,10 @@ async def ask_knowledge_base(ask_request: AskRequest):
 
 
 @router.post("/search/ask/simple", response_model=AskResponse)
-async def ask_knowledge_base_simple(ask_request: AskRequest):
+async def ask_knowledge_base_simple(
+    ask_request: AskRequest,
+    accept_language: str | None = Header(None, alias="Accept-Language"),
+):
     """Ask the knowledge base a question and return a simple response (non-streaming)."""
     try:
         # Validate models exist
@@ -188,8 +211,13 @@ async def ask_knowledge_base_simple(ask_request: AskRequest):
 
         # Run the ask graph and get final result
         final_answer = None
+        output_language = parse_output_language(accept_language)
+        output_language_instruction = build_output_language_instruction(output_language)
         async for chunk in ask_graph.astream(
-            input=dict(question=ask_request.question),  # type: ignore[arg-type]
+            input=dict(
+                question=ask_request.question,
+                output_language_instruction=output_language_instruction,
+            ),  # type: ignore[arg-type]
             config=dict(
                 configurable=dict(
                     strategy_model=strategy_model.id,

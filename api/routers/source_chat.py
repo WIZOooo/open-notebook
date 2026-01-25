@@ -2,7 +2,7 @@ import asyncio
 import json
 from typing import AsyncGenerator, List, Optional
 
-from fastapi import APIRouter, HTTPException, Path
+from fastapi import APIRouter, Header, HTTPException, Path
 from fastapi.responses import StreamingResponse
 from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
@@ -15,6 +15,10 @@ from open_notebook.exceptions import (
     NotFoundError,
 )
 from open_notebook.graphs.source_chat import source_chat_graph as source_chat_graph
+from open_notebook.utils.language_utils import (
+    build_output_language_instruction,
+    parse_output_language,
+)
 
 router = APIRouter()
 
@@ -318,7 +322,8 @@ async def stream_source_chat_response(
     session_id: str,
     source_id: str,
     message: str,
-    model_override: Optional[str] = None
+    model_override: Optional[str] = None,
+    output_language_instruction: Optional[str] = None,
 ) -> AsyncGenerator[str, None]:
     """Stream the source chat response as Server-Sent Events."""
     try:
@@ -332,6 +337,7 @@ async def stream_source_chat_response(
         state_values["messages"] = state_values.get("messages", [])
         state_values["source_id"] = source_id
         state_values["model_override"] = model_override
+        state_values["output_language_instruction"] = output_language_instruction
         
         # Add user message to state
         user_message = HumanMessage(content=message)
@@ -389,7 +395,8 @@ async def stream_source_chat_response(
 async def send_message_to_source_chat(
     request: SendMessageRequest,
     source_id: str = Path(..., description="Source ID"),
-    session_id: str = Path(..., description="Session ID")
+    session_id: str = Path(..., description="Session ID"),
+    accept_language: str | None = Header(None, alias="Accept-Language"),
 ):
     """Send a message to source chat session with SSE streaming response."""
     try:
@@ -419,6 +426,8 @@ async def send_message_to_source_chat(
         
         # Determine model override (request override takes precedence over session override)
         model_override = request.model_override or getattr(session, 'model_override', None)
+        output_language = parse_output_language(accept_language)
+        output_language_instruction = build_output_language_instruction(output_language)
         
         # Update session timestamp
         await session.save()
@@ -429,7 +438,8 @@ async def send_message_to_source_chat(
                 session_id=session_id,
                 source_id=full_source_id,
                 message=request.message,
-                model_override=model_override
+                model_override=model_override,
+                output_language_instruction=output_language_instruction,
             ),
             media_type="text/plain",
             headers={

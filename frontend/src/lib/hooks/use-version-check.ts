@@ -3,6 +3,8 @@
 import { useEffect } from 'react'
 import { toast } from 'sonner'
 import { getConfig } from '@/lib/config'
+import { t as translate } from '@/i18n'
+import { useLanguageStore } from '@/lib/stores/language-store'
 
 /**
  * Hook to check for version updates and display notification.
@@ -13,6 +15,7 @@ export function useVersionCheck() {
     const checkVersion = async () => {
       try {
         const config = await getConfig()
+        const language = useLanguageStore.getState().language
 
         // Only show notification if update is available
         if (config.hasUpdate && config.latestVersion) {
@@ -22,12 +25,12 @@ export function useVersionCheck() {
 
           if (!isDismissed) {
             // Show persistent toast notification
-            toast.info(`Version ${config.latestVersion} available`, {
-              description: 'A new version of Open Notebook is available.',
+            toast.info(translate(language, 'version.update.title', { version: config.latestVersion }), {
+              description: translate(language, 'version.update.desc'),
               duration: Infinity, // No auto-dismiss - user must manually dismiss
               closeButton: true, // Show close button for dismissing
               action: {
-                label: 'View on GitHub',
+                label: translate(language, 'version.update.action'),
                 onClick: () => {
                   window.open(
                     'https://github.com/lfnovo/open-notebook',

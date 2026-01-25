@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/common/EmptyState'
 import { Book, ChevronDown, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
+import { useT } from '@/i18n'
 
 interface NotebookListProps {
   notebooks?: NotebookResponse[]
@@ -26,6 +27,7 @@ export function NotebookList({
   emptyDescription,
 }: NotebookListProps) {
   const [isExpanded, setIsExpanded] = useState(!collapsible)
+  const { t } = useT()
 
   if (isLoading) {
     return (
@@ -39,8 +41,8 @@ export function NotebookList({
     return (
       <EmptyState
         icon={Book}
-        title={emptyTitle ?? `No ${title.toLowerCase()}`}
-        description={emptyDescription ?? 'Start by creating your first notebook to organize your research.'}
+        title={emptyTitle ?? t('common.empty.no_items', { item: title })}
+        description={emptyDescription ?? t('notebooks.empty.default_desc')}
       />
     )
   }

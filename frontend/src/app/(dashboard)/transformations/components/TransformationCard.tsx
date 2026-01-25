@@ -10,6 +10,7 @@ import { ChevronDown, ChevronRight, Trash2, Wand2, Edit } from 'lucide-react'
 import { Transformation } from '@/lib/types/transformations'
 import { useDeleteTransformation } from '@/lib/hooks/use-transformations'
 import { cn } from '@/lib/utils'
+import { useT } from '@/i18n'
 
 interface TransformationCardProps {
   transformation: Transformation
@@ -18,6 +19,7 @@ interface TransformationCardProps {
 }
 
 export function TransformationCard({ transformation, onPlayground, onEdit }: TransformationCardProps) {
+  const { t } = useT()
   const [isExpanded, setIsExpanded] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const deleteTransformation = useDeleteTransformation()
@@ -47,7 +49,7 @@ export function TransformationCard({ transformation, onPlayground, onEdit }: Tra
                     )}
                   </div>
                   {transformation.apply_default && (
-                    <Badge variant="secondary">default</Badge>
+                    <Badge variant="secondary">{t('common.default')}</Badge>
                   )}
                 </div>
               </CollapsibleTrigger>
@@ -56,13 +58,13 @@ export function TransformationCard({ transformation, onPlayground, onEdit }: Tra
                 {onPlayground && (
                   <Button variant="outline" size="sm" onClick={onPlayground}>
                     <Wand2 className="h-4 w-4 mr-2" />
-                    Playground
+                    {t('transformations.tabs.playground')}
                   </Button>
                 )}
                 {onEdit && (
                   <Button variant="outline" size="sm" onClick={onEdit}>
                     <Edit className="h-4 w-4 mr-2" />
-                    Edit
+                    {t('common.edit')}
                   </Button>
                 )}
                 <Button
@@ -80,19 +82,19 @@ export function TransformationCard({ transformation, onPlayground, onEdit }: Tra
           <CollapsibleContent>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-sm text-muted-foreground">Title</p>
-                <p className="text-sm font-medium">{transformation.title || 'Untitled'}</p>
+                <p className="text-sm text-muted-foreground">{t('transformations.editor.title')}</p>
+                <p className="text-sm font-medium">{transformation.title || t('common.untitled')}</p>
               </div>
 
               {transformation.description && (
                 <div>
-                  <p className="text-sm text-muted-foreground">Description</p>
+                  <p className="text-sm text-muted-foreground">{t('common.description')}</p>
                   <p className="text-sm leading-6">{transformation.description}</p>
                 </div>
               )}
 
               <div>
-                <p className="text-sm text-muted-foreground">Prompt</p>
+                <p className="text-sm text-muted-foreground">{t('transformations.editor.prompt')}</p>
                 <pre className="mt-2 whitespace-pre-wrap rounded-md bg-muted p-3 text-sm font-mono">
                   {transformation.prompt}
                 </pre>
@@ -105,9 +107,9 @@ export function TransformationCard({ transformation, onPlayground, onEdit }: Tra
       <ConfirmDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
-        title="Delete Transformation"
-        description={`Are you sure you want to delete "${transformation.name}"? This action cannot be undone.`}
-        confirmText="Delete"
+        title={t('transformations.delete.title')}
+        description={t('transformations.delete.desc', { name: transformation.name })}
+        confirmText={t('common.delete')}
         confirmVariant="destructive"
         onConfirm={handleDelete}
         isLoading={deleteTransformation.isPending}

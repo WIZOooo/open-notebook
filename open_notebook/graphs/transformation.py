@@ -15,6 +15,7 @@ class TransformationState(TypedDict):
     source: Source
     transformation: Transformation
     output: str
+    output_language_instruction: str
 
 
 async def run_transformation(state: dict, config: RunnableConfig) -> dict:
@@ -26,9 +27,18 @@ async def run_transformation(state: dict, config: RunnableConfig) -> dict:
     if not content:
         content = source.full_text
     transformation_template_text = transformation.prompt
-    default_prompts: DefaultPrompts = DefaultPrompts(transformation_instructions=None)
-    if default_prompts.transformation_instructions:
-        transformation_template_text = f"{default_prompts.transformation_instructions}\n\n{transformation_template_text}"
+    if transformation.apply_default:
+        parts: list[str] = []
+        output_language_instruction = state.get("output_language_instruction")
+        if output_language_instruction:
+            parts.append(str(output_language_instruction))
+        default_prompts: DefaultPrompts = await DefaultPrompts.get_instance()  # type: ignore[assignment]
+        if default_prompts.transformation_instructions:
+            parts.append(default_prompts.transformation_instructions)
+        if parts:
+            transformation_template_text = (
+                "\n\n".join(parts) + "\n\n" + transformation_template_text
+            )
 
     transformation_template_text = f"{transformation_template_text}\n\n# INPUT"
 

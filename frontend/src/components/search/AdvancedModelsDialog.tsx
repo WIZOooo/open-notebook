@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { ModelSelector } from '@/components/common/ModelSelector'
+import { useT } from '@/i18n'
 
 interface AdvancedModelsDialogProps {
   open: boolean
@@ -33,6 +34,7 @@ export function AdvancedModelsDialog({
   defaultModels,
   onSave
 }: AdvancedModelsDialogProps) {
+  const { t } = useT()
   const [strategyModel, setStrategyModel] = useState(defaultModels.strategy)
   const [answerModel, setAnswerModel] = useState(defaultModels.answer)
   const [finalAnswerModel, setFinalAnswerModel] = useState(defaultModels.finalAnswer)
@@ -57,44 +59,44 @@ export function AdvancedModelsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Advanced Model Selection</DialogTitle>
+          <DialogTitle>{t('ask.advanced_models.title')}</DialogTitle>
           <DialogDescription>
-            Choose specific models for each stage of the Ask process
+            {t('ask.advanced_models.desc')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <ModelSelector
-            label="Strategy Model"
+            label={t('ask.advanced_models.strategy_label')}
             modelType="language"
             value={strategyModel}
             onChange={setStrategyModel}
-            placeholder="Select strategy model"
+            placeholder={t('ask.advanced_models.strategy_placeholder')}
           />
 
           <ModelSelector
-            label="Answer Model"
+            label={t('ask.advanced_models.answer_label')}
             modelType="language"
             value={answerModel}
             onChange={setAnswerModel}
-            placeholder="Select answer model"
+            placeholder={t('ask.advanced_models.answer_placeholder')}
           />
 
           <ModelSelector
-            label="Final Answer Model"
+            label={t('ask.advanced_models.final_label')}
             modelType="language"
             value={finalAnswerModel}
             onChange={setFinalAnswerModel}
-            placeholder="Select final answer model"
+            placeholder={t('ask.advanced_models.final_placeholder')}
           />
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleSave}>
-            Save Changes
+            {t('common.save_changes')}
           </Button>
         </DialogFooter>
       </DialogContent>

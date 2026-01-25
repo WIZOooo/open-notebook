@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { transformationsApi } from '@/lib/api/transformations'
 import { useToast } from '@/lib/hooks/use-toast'
+import { t as translate } from '@/i18n'
+import { useLanguageStore } from '@/lib/stores/language-store'
 import {
   CreateTransformationRequest,
   UpdateTransformationRequest,
@@ -37,16 +39,18 @@ export function useCreateTransformation() {
   return useMutation({
     mutationFn: (data: CreateTransformationRequest) => transformationsApi.create(data),
     onSuccess: () => {
+      const language = useLanguageStore.getState().language
       queryClient.invalidateQueries({ queryKey: TRANSFORMATION_QUERY_KEYS.transformations })
       toast({
-        title: 'Success',
-        description: 'Transformation created successfully',
+        title: translate(language, 'toast.success'),
+        description: translate(language, 'transformations.toast.created'),
       })
     },
     onError: () => {
+      const language = useLanguageStore.getState().language
       toast({
-        title: 'Error',
-        description: 'Failed to create transformation',
+        title: translate(language, 'toast.error'),
+        description: translate(language, 'transformations.toast.create_failed'),
         variant: 'destructive',
       })
     },
@@ -61,17 +65,21 @@ export function useUpdateTransformation() {
     mutationFn: ({ id, data }: { id: string; data: UpdateTransformationRequest }) =>
       transformationsApi.update(id, data),
     onSuccess: (_, { id, data }) => {
+      const language = useLanguageStore.getState().language
       queryClient.invalidateQueries({ queryKey: TRANSFORMATION_QUERY_KEYS.transformations })
       queryClient.invalidateQueries({ queryKey: TRANSFORMATION_QUERY_KEYS.transformation(id) })
       toast({
-        title: 'Success',
-        description: `Transformation '${data.name || 'transformation'}' saved successfully`,
+        title: translate(language, 'toast.success'),
+        description: translate(language, 'transformations.toast.saved', {
+          name: data.name || translate(language, 'transformations.toast.fallback_name'),
+        }),
       })
     },
     onError: () => {
+      const language = useLanguageStore.getState().language
       toast({
-        title: 'Error',
-        description: 'Failed to update transformation',
+        title: translate(language, 'toast.error'),
+        description: translate(language, 'transformations.toast.save_failed'),
         variant: 'destructive',
       })
     },
@@ -85,16 +93,18 @@ export function useDeleteTransformation() {
   return useMutation({
     mutationFn: (id: string) => transformationsApi.delete(id),
     onSuccess: () => {
+      const language = useLanguageStore.getState().language
       queryClient.invalidateQueries({ queryKey: TRANSFORMATION_QUERY_KEYS.transformations })
       toast({
-        title: 'Success',
-        description: 'Transformation deleted successfully',
+        title: translate(language, 'toast.success'),
+        description: translate(language, 'transformations.toast.deleted'),
       })
     },
     onError: () => {
+      const language = useLanguageStore.getState().language
       toast({
-        title: 'Error',
-        description: 'Failed to delete transformation',
+        title: translate(language, 'toast.error'),
+        description: translate(language, 'transformations.toast.delete_failed'),
         variant: 'destructive',
       })
     },
@@ -107,9 +117,10 @@ export function useExecuteTransformation() {
   return useMutation({
     mutationFn: (data: ExecuteTransformationRequest) => transformationsApi.execute(data),
     onError: () => {
+      const language = useLanguageStore.getState().language
       toast({
-        title: 'Error',
-        description: 'Failed to execute transformation',
+        title: translate(language, 'toast.error'),
+        description: translate(language, 'transformations.toast.execute_failed'),
         variant: 'destructive',
       })
     },

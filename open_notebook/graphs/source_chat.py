@@ -25,6 +25,7 @@ class SourceChatState(TypedDict):
     context: Optional[str]
     model_override: Optional[str]
     context_indicators: Optional[Dict[str, List[str]]]
+    output_language_instruction: Optional[str]
 
 
 def call_model_with_source_context(
@@ -107,6 +108,7 @@ def call_model_with_source_context(
         "insights": [insight.model_dump() for insight in insights] if insights else [],
         "context": formatted_context,
         "context_indicators": context_indicators,
+        "output_language_instruction": state.get("output_language_instruction"),
     }
 
     # Apply the source_chat prompt template

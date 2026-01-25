@@ -16,6 +16,7 @@ import {
   Clock
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import { zhCN } from 'date-fns/locale'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +29,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { BaseChatSession } from '@/lib/types/api'
 import { useModels } from '@/lib/hooks/use-models'
+import { useT } from '@/i18n'
 
 interface SessionManagerProps {
   sessions: BaseChatSession[]
@@ -48,6 +50,7 @@ export function SessionManager({
   onDeleteSession,
   loadingSessions
 }: SessionManagerProps) {
+  const { t, language } = useT()
   const [isCreating, setIsCreating] = useState(false)
   const [newSessionTitle, setNewSessionTitle] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -60,9 +63,9 @@ export function SessionManager({
   const getModelName = useMemo(() => {
     return (modelId: string) => {
       const model = models?.find(m => m.id === modelId)
-      return model?.name || 'Custom Model'
+      return model?.name || t('models.custom_model')
     }
-  }, [models])
+  }, [models, t])
 
   const handleCreateSession = () => {
     if (newSessionTitle.trim()) {
@@ -104,7 +107,7 @@ export function SessionManager({
           <CardTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
-              Chat Sessions
+              {t('source.sessions.title')}
             </span>
             <Button
               size="sm"
@@ -122,7 +125,7 @@ export function SessionManager({
                 <Input
                   value={newSessionTitle}
                   onChange={(e) => setNewSessionTitle(e.target.value)}
-                  placeholder="Session title..."
+                  placeholder={t('source.sessions.title_placeholder')}
                   className="mb-2"
                   autoFocus
                   onKeyPress={(e) => {
@@ -131,7 +134,7 @@ export function SessionManager({
                 />
                 <div className="flex gap-2">
                   <Button size="sm" onClick={handleCreateSession}>
-                    Create
+                    {t('common.create')}
                   </Button>
                   <Button
                     size="sm"
@@ -141,7 +144,7 @@ export function SessionManager({
                       setNewSessionTitle('')
                     }}
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </Button>
                 </div>
               </div>
@@ -149,13 +152,13 @@ export function SessionManager({
 
             {loadingSessions ? (
               <div className="text-center py-8 text-muted-foreground">
-                Loading sessions...
+                {t('source.sessions.loading')}
               </div>
             ) : sessions.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="text-sm">No chat sessions yet</p>
-                <p className="text-xs mt-2">Create a session to start chatting</p>
+                <p className="text-sm">{t('source.sessions.empty.title')}</p>
+                <p className="text-xs mt-2">{t('source.sessions.empty.desc')}</p>
               </div>
             ) : (
               <div className="space-y-2 pb-4">
@@ -220,11 +223,14 @@ export function SessionManager({
                         </div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Clock className="h-3 w-3" />
-                          {formatDistanceToNow(new Date(session.created), { addSuffix: true })}
+                          {formatDistanceToNow(new Date(session.created), {
+                            addSuffix: true,
+                            locale: language === 'zh-CN' ? zhCN : undefined
+                          })}
                         </div>
                         {session.message_count != null && session.message_count > 0 && (
                           <Badge variant="secondary" className="mt-2 text-xs">
-                            {session.message_count} messages
+                            {t('source.sessions.messages', { count: session.message_count })}
                           </Badge>
                         )}
                         {session.model_override && (
@@ -245,15 +251,15 @@ export function SessionManager({
       <AlertDialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Chat Session?</AlertDialogTitle>
+            <AlertDialogTitle>{t('source.sessions.delete.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. All messages in this session will be permanently deleted.
+              {t('source.sessions.delete.desc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteConfirm}>
-              Delete
+              {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

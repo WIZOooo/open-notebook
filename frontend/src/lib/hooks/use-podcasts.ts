@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { podcastsApi, EpisodeProfileInput, SpeakerProfileInput } from '@/lib/api/podcasts'
 import { QUERY_KEYS } from '@/lib/api/query-client'
 import { useToast } from '@/lib/hooks/use-toast'
+import { t as translate } from '@/i18n'
+import { useLanguageStore } from '@/lib/stores/language-store'
 import {
   ACTIVE_EPISODE_STATUSES,
   EpisodeProfile,
@@ -327,16 +329,18 @@ export function useDuplicateSpeakerProfile() {
     mutationFn: (profileId: string) =>
       podcastsApi.duplicateSpeakerProfile(profileId),
     onSuccess: () => {
+      const language = useLanguageStore.getState().language
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.speakerProfiles })
       toast({
-        title: 'Speaker profile duplicated',
-        description: 'A copy of the profile has been created.',
+        title: translate(language, 'podcasts.toast.speaker_duplicated.title'),
+        description: translate(language, 'podcasts.toast.speaker_duplicated.desc'),
       })
     },
     onError: () => {
+      const language = useLanguageStore.getState().language
       toast({
-        title: 'Failed to duplicate speaker profile',
-        description: 'Please try again later.',
+        title: translate(language, 'podcasts.toast.speaker_duplicate_failed.title'),
+        description: translate(language, 'podcasts.toast.speaker_duplicate_failed.desc'),
         variant: 'destructive',
       })
     },
@@ -351,17 +355,21 @@ export function useGeneratePodcast() {
     mutationFn: (payload: PodcastGenerationRequest) =>
       podcastsApi.generatePodcast(payload),
     onSuccess: async (response) => {
+      const language = useLanguageStore.getState().language
       // Immediately refetch to show the new episode
       await queryClient.refetchQueries({ queryKey: QUERY_KEYS.podcastEpisodes })
       toast({
-        title: 'Podcast generation started',
-        description: `Episode "${response.episode_name}" is being created.`,
+        title: translate(language, 'podcasts.toast.generation_started.title'),
+        description: translate(language, 'podcasts.toast.generation_started.desc', {
+          name: response.episode_name,
+        }),
       })
     },
     onError: () => {
+      const language = useLanguageStore.getState().language
       toast({
-        title: 'Failed to start podcast generation',
-        description: 'Please try again in a moment.',
+        title: translate(language, 'podcasts.toast.generation_failed.title'),
+        description: translate(language, 'podcasts.toast.generation_failed.desc'),
         variant: 'destructive',
       })
     },

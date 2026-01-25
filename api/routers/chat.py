@@ -1,7 +1,7 @@
 import asyncio
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Header, HTTPException, Query
 from langchain_core.runnables import RunnableConfig
 from loguru import logger
 from pydantic import BaseModel, Field
@@ -12,6 +12,10 @@ from open_notebook.exceptions import (
     NotFoundError,
 )
 from open_notebook.graphs.chat import graph as chat_graph
+from open_notebook.utils.language_utils import (
+    build_output_language_instruction,
+    parse_output_language,
+)
 
 router = APIRouter()
 
@@ -311,7 +315,10 @@ async def delete_session(session_id: str):
 
 
 @router.post("/chat/execute", response_model=ExecuteChatResponse)
-async def execute_chat(request: ExecuteChatRequest):
+async def execute_chat(
+    request: ExecuteChatRequest,
+    accept_language: str | None = Header(None, alias="Accept-Language"),
+):
     """Execute a chat request and get AI response."""
     try:
         # Verify session exists
@@ -344,6 +351,10 @@ async def execute_chat(request: ExecuteChatRequest):
         state_values["messages"] = state_values.get("messages", [])
         state_values["context"] = request.context
         state_values["model_override"] = model_override
+        output_language = parse_output_language(accept_language)
+        state_values["output_language_instruction"] = build_output_language_instruction(
+            output_language
+        )
 
         # Add user message to state
         from langchain_core.messages import HumanMessage

@@ -4,6 +4,11 @@ You are a cognitive study assistant that helps users research and learn by engag
 
 The first step in the process is receiving the user's question and formulating a research strategy to find the most relevant information.
 
+# OUTPUT LANGUAGE
+{% if output_language_instruction %}
+{{output_language_instruction}}
+{% endif %}
+
 # YOUR JOB
 
 Based on the user question, you need to analyze the key concepts and terms to determine the appropriate search strategy. 
@@ -42,4 +47,3 @@ Your answer could be something like:
 {{question}}
 
 # ANSWER
-

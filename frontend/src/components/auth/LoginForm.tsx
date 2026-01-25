@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertCircle } from 'lucide-react'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
+import { useT } from '@/i18n'
 
 export function LoginForm() {
   const [password, setPassword] = useState('')
@@ -18,6 +19,7 @@ export function LoginForm() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [configInfo, setConfigInfo] = useState<{ apiUrl: string; version: string; buildTime: string } | null>(null)
   const router = useRouter()
+  const { t } = useT()
 
   // Load config info for debugging
   useEffect(() => {
@@ -81,9 +83,9 @@ export function LoginForm() {
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle>Connection Error</CardTitle>
+            <CardTitle>{t('auth.connection_error.title')}</CardTitle>
             <CardDescription>
-              Unable to connect to the API server
+              {t('auth.connection_error.desc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -91,21 +93,21 @@ export function LoginForm() {
               <div className="flex items-start gap-2 text-red-600 text-sm">
                 <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
-                  {error || 'Unable to connect to server. Please check if the API is running.'}
+                  {error || t('auth.connection_error.details_fallback')}
                 </div>
               </div>
 
               {configInfo && (
                 <div className="space-y-2 text-xs text-muted-foreground border-t pt-3">
-                  <div className="font-medium">Diagnostic Information:</div>
+                  <div className="font-medium">{t('auth.connection_error.diagnostic.title')}</div>
                   <div className="space-y-1 font-mono">
-                    <div>Version: {configInfo.version}</div>
-                    <div>Built: {new Date(configInfo.buildTime).toLocaleString()}</div>
-                    <div className="break-all">API URL: {configInfo.apiUrl}</div>
-                    <div className="break-all">Frontend: {typeof window !== 'undefined' ? window.location.href : 'N/A'}</div>
+                    <div>{t('auth.connection_error.diagnostic.version', { version: configInfo.version })}</div>
+                    <div>{t('auth.connection_error.diagnostic.built', { built: new Date(configInfo.buildTime).toLocaleString() })}</div>
+                    <div className="break-all">{t('auth.connection_error.diagnostic.api_url', { apiUrl: configInfo.apiUrl })}</div>
+                    <div className="break-all">{t('auth.connection_error.diagnostic.frontend', { url: typeof window !== 'undefined' ? window.location.href : t('common.na') })}</div>
                   </div>
                   <div className="text-xs pt-2">
-                    Check browser console for detailed logs (look for 🔧 [Config] messages)
+                    {t('auth.connection_error.diagnostic.hint')}
                   </div>
                 </div>
               )}
@@ -114,7 +116,7 @@ export function LoginForm() {
                 onClick={() => window.location.reload()}
                 className="w-full"
               >
-                Retry Connection
+                {t('auth.connection_error.retry')}
               </Button>
             </div>
           </CardContent>
@@ -141,7 +143,7 @@ export function LoginForm() {
         <CardHeader className="text-center">
           <CardTitle>Open Notebook</CardTitle>
           <CardDescription>
-            Enter your password to access the application
+            {t('auth.login.desc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -149,7 +151,7 @@ export function LoginForm() {
             <div>
               <Input
                 type="password"
-                placeholder="Password"
+                placeholder={t('auth.login.password_placeholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoading}
@@ -168,12 +170,12 @@ export function LoginForm() {
               className="w-full"
               disabled={isLoading || !password.trim()}
             >
-              {isLoading ? 'Signing in...' : 'Sign In'}
+              {isLoading ? t('auth.login.signing_in') : t('auth.login.sign_in')}
             </Button>
 
             {configInfo && (
               <div className="text-xs text-center text-muted-foreground pt-2 border-t">
-                <div>Version {configInfo.version}</div>
+                <div>{t('auth.login.version', { version: configInfo.version })}</div>
                 <div className="font-mono text-[10px]">{configInfo.apiUrl}</div>
               </div>
             )}

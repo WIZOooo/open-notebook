@@ -29,37 +29,48 @@ import {
   Monitor,
   Loader2,
 } from 'lucide-react'
-
-const navigationItems = [
-  { name: 'Sources', href: '/sources', icon: FileText, keywords: ['files', 'documents', 'upload'] },
-  { name: 'Notebooks', href: '/notebooks', icon: Book, keywords: ['notes', 'research', 'projects'] },
-  { name: 'Ask and Search', href: '/search', icon: Search, keywords: ['find', 'query'] },
-  { name: 'Podcasts', href: '/podcasts', icon: Mic, keywords: ['audio', 'episodes', 'generate'] },
-  { name: 'Models', href: '/models', icon: Bot, keywords: ['ai', 'llm', 'providers', 'openai', 'anthropic'] },
-  { name: 'Transformations', href: '/transformations', icon: Shuffle, keywords: ['prompts', 'templates', 'actions'] },
-  { name: 'Settings', href: '/settings', icon: Settings, keywords: ['preferences', 'config', 'options'] },
-  { name: 'Advanced', href: '/advanced', icon: Wrench, keywords: ['debug', 'system', 'tools'] },
-]
-
-const createItems = [
-  { name: 'Create Source', action: 'source', icon: FileText },
-  { name: 'Create Notebook', action: 'notebook', icon: Book },
-  { name: 'Create Podcast', action: 'podcast', icon: Mic },
-]
-
-const themeItems = [
-  { name: 'Light Theme', value: 'light' as const, icon: Sun, keywords: ['bright', 'day'] },
-  { name: 'Dark Theme', value: 'dark' as const, icon: Moon, keywords: ['night'] },
-  { name: 'System Theme', value: 'system' as const, icon: Monitor, keywords: ['auto', 'default'] },
-]
+import { useT } from '@/i18n'
 
 export function CommandPalette() {
+  const { t } = useT()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const router = useRouter()
   const { openSourceDialog, openNotebookDialog, openPodcastDialog } = useCreateDialogs()
   const { setTheme } = useTheme()
   const { data: notebooks, isLoading: notebooksLoading } = useNotebooks(false)
+
+  const navigationItems = useMemo(
+    () => [
+      { name: t('sidebar.nav.sources'), href: '/sources', icon: FileText, keywords: ['files', 'documents', 'upload', '来源', '文件'] },
+      { name: t('sidebar.nav.notebooks'), href: '/notebooks', icon: Book, keywords: ['notes', 'research', 'projects', '笔记本', '笔记'] },
+      { name: t('sidebar.nav.ask_search'), href: '/search', icon: Search, keywords: ['find', 'query', '搜索', '提问'] },
+      { name: t('sidebar.nav.podcasts'), href: '/podcasts', icon: Mic, keywords: ['audio', 'episodes', 'generate', '播客'] },
+      { name: t('sidebar.nav.models'), href: '/models', icon: Bot, keywords: ['ai', 'llm', 'providers', 'openai', 'anthropic', '模型'] },
+      { name: t('sidebar.nav.transformations'), href: '/transformations', icon: Shuffle, keywords: ['prompts', 'templates', 'actions', '转换'] },
+      { name: t('sidebar.nav.settings'), href: '/settings', icon: Settings, keywords: ['preferences', 'config', 'options', '设置'] },
+      { name: t('sidebar.nav.advanced'), href: '/advanced', icon: Wrench, keywords: ['debug', 'system', 'tools', '高级'] },
+    ],
+    [t]
+  )
+
+  const createItems = useMemo(
+    () => [
+      { name: t('command_palette.create.source'), action: 'source', icon: FileText },
+      { name: t('command_palette.create.notebook'), action: 'notebook', icon: Book },
+      { name: t('command_palette.create.podcast'), action: 'podcast', icon: Mic },
+    ],
+    [t]
+  )
+
+  const themeItems = useMemo(
+    () => [
+      { name: t('command_palette.theme.light'), value: 'light' as const, icon: Sun, keywords: ['bright', 'day', '浅色'] },
+      { name: t('command_palette.theme.dark'), value: 'dark' as const, icon: Moon, keywords: ['night', '深色'] },
+      { name: t('command_palette.theme.system'), value: 'system' as const, icon: Monitor, keywords: ['auto', 'default', '系统'] },
+    ],
+    [t]
+  )
 
   // Global keyboard listener for ⌘K / Ctrl+K
   useEffect(() => {
@@ -147,7 +158,7 @@ export function CommandPalette() {
         (nb.description && nb.description.toLowerCase().includes(queryLower))
       ) ?? false)
     )
-  }, [queryLower, notebooks])
+  }, [queryLower, notebooks, navigationItems, createItems, themeItems])
 
   // Determine if we should show the Search/Ask section at the top
   const showSearchFirst = query.trim() && !hasCommandMatch
@@ -156,26 +167,26 @@ export function CommandPalette() {
     <CommandDialog
       open={open}
       onOpenChange={setOpen}
-      title="Command Palette"
-      description="Navigate, search, or ask your knowledge base"
+      title={t('command_palette.title')}
+      description={t('command_palette.desc')}
       className="sm:max-w-lg"
     >
       <CommandInput
-        placeholder="Type a command or search..."
+        placeholder={t('command_palette.placeholder')}
         value={query}
         onValueChange={setQuery}
       />
       <CommandList>
         {/* Search/Ask - show FIRST when there's a query with no command match */}
         {showSearchFirst && (
-          <CommandGroup heading="Search & Ask" forceMount>
+          <CommandGroup heading={t('command_palette.group.search_ask')} forceMount>
             <CommandItem
               value={`__search__ ${query}`}
               onSelect={handleSearch}
               forceMount
             >
               <Search className="h-4 w-4" />
-              <span>Search for &ldquo;{query}&rdquo;</span>
+              <span>{t('command_palette.search_for', { query })}</span>
             </CommandItem>
             <CommandItem
               value={`__ask__ ${query}`}
@@ -183,13 +194,13 @@ export function CommandPalette() {
               forceMount
             >
               <MessageCircleQuestion className="h-4 w-4" />
-              <span>Ask about &ldquo;{query}&rdquo;</span>
+              <span>{t('command_palette.ask_about', { query })}</span>
             </CommandItem>
           </CommandGroup>
         )}
 
         {/* Navigation */}
-        <CommandGroup heading="Navigation">
+        <CommandGroup heading={t('command_palette.group.navigation')}>
           {navigationItems.map((item) => (
             <CommandItem
               key={item.href}
@@ -203,11 +214,11 @@ export function CommandPalette() {
         </CommandGroup>
 
         {/* Notebooks */}
-        <CommandGroup heading="Notebooks">
+        <CommandGroup heading={t('command_palette.group.notebooks')}>
           {notebooksLoading ? (
             <CommandItem disabled>
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Loading notebooks...</span>
+              <span>{t('command_palette.loading_notebooks')}</span>
             </CommandItem>
           ) : notebooks && notebooks.length > 0 ? (
             notebooks.map((notebook) => (
@@ -224,7 +235,7 @@ export function CommandPalette() {
         </CommandGroup>
 
         {/* Create */}
-        <CommandGroup heading="Create">
+        <CommandGroup heading={t('command_palette.group.create')}>
           {createItems.map((item) => (
             <CommandItem
               key={item.action}
@@ -238,7 +249,7 @@ export function CommandPalette() {
         </CommandGroup>
 
         {/* Theme */}
-        <CommandGroup heading="Theme">
+        <CommandGroup heading={t('command_palette.group.theme')}>
           {themeItems.map((item) => (
             <CommandItem
               key={item.value}
@@ -255,14 +266,14 @@ export function CommandPalette() {
         {query.trim() && hasCommandMatch && (
           <>
             <CommandSeparator />
-            <CommandGroup heading="Or search your knowledge base" forceMount>
+            <CommandGroup heading={t('command_palette.group.search_ask_alt')} forceMount>
               <CommandItem
                 value={`__search__ ${query}`}
                 onSelect={handleSearch}
                 forceMount
               >
                 <Search className="h-4 w-4" />
-                <span>Search for &ldquo;{query}&rdquo;</span>
+                <span>{t('command_palette.search_for', { query })}</span>
               </CommandItem>
               <CommandItem
                 value={`__ask__ ${query}`}
@@ -270,7 +281,7 @@ export function CommandPalette() {
                 forceMount
               >
                 <MessageCircleQuestion className="h-4 w-4" />
-                <span>Ask about &ldquo;{query}&rdquo;</span>
+                <span>{t('command_palette.ask_about', { query })}</span>
               </CommandItem>
             </CommandGroup>
           </>

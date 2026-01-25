@@ -22,6 +22,7 @@ import {
 import { Settings2, Sparkles } from 'lucide-react'
 import { useModelDefaults, useModels } from '@/lib/hooks/use-models'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
+import { useT } from '@/i18n'
 
 interface ModelSelectorProps {
   currentModel?: string
@@ -34,6 +35,7 @@ export function ModelSelector({
   onModelChange,
   disabled = false 
 }: ModelSelectorProps) {
+  const { t } = useT()
   const [open, setOpen] = useState(false)
   const [selectedModel, setSelectedModel] = useState(currentModel || 'default')
   const { data: models, isLoading } = useModels()
@@ -65,8 +67,8 @@ export function ModelSelector({
     if (defaultModel) {
       return defaultModel.name
     }
-    return 'Default Model'
-  }, [currentModel, languageModels, defaultModel])
+    return t('chat.model_config.default_model')
+  }, [currentModel, languageModels, defaultModel, t])
 
   const handleSave = () => {
     onModelChange(selectedModel === 'default' ? undefined : selectedModel)
@@ -98,24 +100,26 @@ export function ModelSelector({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5" />
-            Model Configuration
+            {t('chat.model_config.title')}
           </DialogTitle>
           <DialogDescription>
-            Override the default model for this chat session. Leave empty to use the system default.
+            {t('chat.model_config.desc')}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="model">Model</Label>
+            <Label htmlFor="model">{t('chat.model')}</Label>
             <Select value={selectedModel} onValueChange={setSelectedModel}>
               <SelectTrigger id="model">
-                <SelectValue placeholder="Select a model (or use default)" />
+                <SelectValue placeholder={t('chat.model_config.select_placeholder')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="default">
                   <div className="flex items-center justify-between w-full">
                     <span>
-                      {defaultModel ? `Default (${defaultModel.name})` : 'System Default'}
+                      {defaultModel
+                        ? t('chat.model_config.default_with_name', { name: defaultModel.name })
+                        : t('chat.model_config.system_default')}
                     </span>
                     {defaultModel?.provider && (
                       <span className="text-xs text-muted-foreground ml-2">
@@ -146,17 +150,19 @@ export function ModelSelector({
           {selectedModel && selectedModel !== 'default' && (
             <div className="rounded-lg bg-muted p-3">
               <p className="text-sm text-muted-foreground">
-                This session will use <strong>{languageModels.find(m => m.id === selectedModel)?.name}</strong> instead of the default model.
+                {t('chat.model_config.using', {
+                  name: languageModels.find((m) => m.id === selectedModel)?.name || selectedModel,
+                })}
               </p>
             </div>
           )}
         </div>
         <DialogFooter className="flex justify-between">
           <Button variant="outline" onClick={handleReset}>
-            Reset to Default
+            {t('chat.model_config.reset')}
           </Button>
           <Button onClick={handleSave}>
-            Save Changes
+            {t('common.save_changes')}
           </Button>
         </DialogFooter>
       </DialogContent>
