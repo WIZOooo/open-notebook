@@ -53,7 +53,7 @@ export OPENAI_COMPATIBLE_API_KEY=not-needed  # LM Studio doesn't require key
 1. Go to **Settings** → **Models**
 2. Click **Add Model**
 3. Configure:
-   - **Provider**: `openai_compatible`
+   - **Provider**: `openai-compatible`
    - **Model Name**: Your model name from LM Studio
    - **Display Name**: `LM Studio - Llama 3`
 4. Click **Save**
@@ -73,8 +73,41 @@ OPENAI_COMPATIBLE_API_KEY=optional-api-key
 
 ```bash
 OPENAI_COMPATIBLE_BASE_URL_EMBEDDING=http://localhost:1234/v1
-OPENAI_COMPATIBLE_BASE_URL_EMBEDDING=optional-api-key
+OPENAI_COMPATIBLE_API_KEY_EMBEDDING=optional-api-key
 ```
+
+### Example: SiliconFlow (硅基流动) Embeddings
+
+If your provider offers an OpenAI-compatible embeddings API, you can use it via the `openai-compatible` provider.
+
+```bash
+# Embedding-only endpoint (recommended)
+OPENAI_COMPATIBLE_BASE_URL_EMBEDDING=https://api.siliconflow.cn/v1
+OPENAI_COMPATIBLE_API_KEY_EMBEDDING=your-token
+```
+
+Then add a model in **Settings → Models**:
+- **Provider**: `openai-compatible`
+- **Type**: `embedding`
+- **Model Name**: the provider's embedding model id (e.g. `BAAI/bge-m3`)
+
+Notes:
+- Open Notebook will call `POST {BASE_URL}/embeddings` with `input: [text]` and expects `data[].embedding`.
+- Sources are chunked before embedding; Notes/Insights are embedded as a whole, so choose a model with a suitable max input length.
+
+### Quick Self-Check (Embedding Endpoint)
+
+Use a direct request to confirm the endpoint is truly OpenAI-compatible:
+
+```bash
+curl -sS "${OPENAI_COMPATIBLE_BASE_URL_EMBEDDING}/embeddings" \
+  -H "Authorization: Bearer ${OPENAI_COMPATIBLE_API_KEY_EMBEDDING}" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"BAAI/bge-m3","input":["hello from open-notebook"]}' \
+  | head -c 400 && echo
+```
+
+Expected: JSON with a `data` array and each item containing an `embedding` float array.
 
 ### Text-to-Speech
 
