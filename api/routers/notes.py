@@ -53,14 +53,27 @@ async def create_note(note_data: NoteCreate):
         title = note_data.title
         if not title and note_data.note_type == "ai" and note_data.content:
             from open_notebook.graphs.prompt import graph as prompt_graph
-            prompt = "Based on the Note below, please provide a Title for this content, with max 15 words"
+            prompt = (
+                "Generate a concise title for the note below.\n"
+                "- Output must be in the same language as the note content.\n"
+                "- Max 15 words (or ~30 characters for CJK languages).\n"
+                "- Return only the title text (no quotes, no prefixes like 'Title:')."
+            )
             result = await prompt_graph.ainvoke(
                 {  # type: ignore[arg-type]
                     "input_text": note_data.content,
                     "prompt": prompt
                 }
             )
-            title = result.get("output", "Untitled Note")
+            generated = (result.get("output") or "").strip()
+            if generated:
+                title = generated
+            else:
+                first_line = next(
+                    (line.strip() for line in note_data.content.splitlines() if line.strip()),
+                    ""
+                )
+                title = first_line[:60] if first_line else "Untitled"
         
         # Validate note_type
         note_type: Optional[Literal["human", "ai"]] = None

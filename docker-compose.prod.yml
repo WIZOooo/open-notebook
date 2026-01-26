@@ -1,0 +1,37 @@
+services:
+  surrealdb:
+    image: surrealdb/surrealdb:v2
+    volumes:
+      - ./surreal_data:/mydata
+    environment:
+      - SURREAL_EXPERIMENTAL_GRAPHQL=true
+    command: start --log info --user root --pass root rocksdb:/mydata/open_notebook.db
+    user: root
+    restart: always
+
+  open_notebook:
+    image: ${OPEN_NOTEBOOK_IMAGE:-lfnovo/open_notebook:v1-latest}
+    ports:
+      - "8502:8502"
+      - "5055:5055"
+    env_file:
+      - ./docker.env
+    environment:
+      - HTTP_PROXY=
+      - HTTPS_PROXY=
+      - ALL_PROXY=
+      - http_proxy=
+      - https_proxy=
+      - all_proxy=
+      - NO_PROXY=surrealdb,localhost,127.0.0.1
+      - no_proxy=surrealdb,localhost,127.0.0.1
+    depends_on:
+      - surrealdb
+    volumes:
+      - ./notebook_data:/app/data
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5055/health >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12

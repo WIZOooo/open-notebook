@@ -4,13 +4,18 @@ FROM python:3.12-slim-bookworm AS builder
 # Install uv using the official method
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
+ARG APT_HTTP_PROXY=
+ARG APT_HTTPS_PROXY=
+
 # Install system dependencies required for building certain Python packages
 # Add Node.js 20.x LTS for building frontend
-RUN apt-get update && apt-get upgrade -y && apt-get install -y \
-    gcc g++ git make \
-    curl \
+RUN apt-get -o Acquire::http::Proxy="${APT_HTTP_PROXY}" -o Acquire::https::Proxy="${APT_HTTPS_PROXY}" update \
+    && apt-get -o Acquire::http::Proxy="${APT_HTTP_PROXY}" -o Acquire::https::Proxy="${APT_HTTPS_PROXY}" upgrade -y \
+    && apt-get -o Acquire::http::Proxy="${APT_HTTP_PROXY}" -o Acquire::https::Proxy="${APT_HTTPS_PROXY}" install -y \
+      gcc g++ git make \
+      curl \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
+    && apt-get -o Acquire::http::Proxy="${APT_HTTP_PROXY}" -o Acquire::https::Proxy="${APT_HTTPS_PROXY}" install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 # Set build optimization environment variables
@@ -44,14 +49,19 @@ WORKDIR /app
 # Runtime stage
 FROM python:3.12-slim-bookworm AS runtime
 
+ARG APT_HTTP_PROXY=
+ARG APT_HTTPS_PROXY=
+
 # Install only runtime system dependencies (no build tools)
 # Add Node.js 20.x LTS for running frontend
-RUN apt-get update && apt-get upgrade -y && apt-get install -y \
-    ffmpeg \
-    supervisor \
-    curl \
+RUN apt-get -o Acquire::http::Proxy="${APT_HTTP_PROXY}" -o Acquire::https::Proxy="${APT_HTTPS_PROXY}" update \
+    && apt-get -o Acquire::http::Proxy="${APT_HTTP_PROXY}" -o Acquire::https::Proxy="${APT_HTTPS_PROXY}" upgrade -y \
+    && apt-get -o Acquire::http::Proxy="${APT_HTTP_PROXY}" -o Acquire::https::Proxy="${APT_HTTPS_PROXY}" install -y \
+      ffmpeg \
+      supervisor \
+      curl \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
+    && apt-get -o Acquire::http::Proxy="${APT_HTTP_PROXY}" -o Acquire::https::Proxy="${APT_HTTPS_PROXY}" install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv using the official method
