@@ -17,7 +17,7 @@ class ContentSettings(RecordModel):
         "ask", description="Default Embedding Option for Vector Search"
     )
     auto_delete_files: Optional[Literal["yes", "no"]] = Field(
-        "yes", description="Auto Delete Uploaded Files"
+        "no", description="Auto Delete Uploaded Files"
     )
     youtube_preferred_languages: Optional[List[str]] = Field(
         ["en", "pt", "es", "de", "nl", "en-GB", "fr", "de", "hi", "ja"],

@@ -10,7 +10,8 @@ services:
     restart: always
 
   open_notebook:
-    image: ${OPEN_NOTEBOOK_IMAGE:-lfnovo/open_notebook:v1-latest}
+    image: open_notebook:local
+    pull_policy: never
     ports:
       - "8502:8502"
       - "5055:5055"
