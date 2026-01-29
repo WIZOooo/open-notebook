@@ -1,29 +1,53 @@
-## 原因说明
-- 你看到的错误：`network ... does not exist`，意思是 Docker 正在创建/启动 `open-notebook-surrealdb-1` 容器时，想把它接入 `open-notebook_default` 这个 Compose 默认网络，但 Docker 记录的网络 ID 已经不存在了。
-- 最常见触发场景：
-  - 在容器还存在时执行过 `docker network prune` / `docker system prune` / 手动 `docker network rm ...`，把 Compose 创建的网络删掉了；
-  - 或者 Docker daemon 重启/异常后网络元数据处于不一致状态。
-- 由于我们的 [deploy-compose.sh](file:///Users/imac/Documents/open-notebook/scripts/deploy-compose.sh#L155-L158) 的 `restart` 本质是 `docker compose up -d`，如果本地有“残留的旧容器/旧网络引用”，就会在接网阶段报这个错。
+## 结论（为什么会这样）
+- 是的，主要原因就是你现在的 `default-address-pools` 配得太少，而且还和 `bip` 用了同一个网段：
+  - `bip: 192.168.100.1/24` 会把默认 `docker0` 网桥固定在 `192.168.100.0/24`。
+  - 同时你把 `default-address-pools` 也限制成唯一的 `192.168.100.0/24`（`size: 24`）。
+  - 结果：这个 /24 基本从一开始就被 `docker0` 占用了，Docker 再想给任何 Compose 网络（例如 `open-notebook_default`）分配一个新的子网时，已经“没有可用的预定义地址池”了，所以清理网络（方案A）也无济于事。
 
-## 服务器侧修复步骤（不改代码，先恢复可用）
-1. 在项目目录确认当前残留：
-   - `docker compose -f docker-compose.prod.yml ps -a`
-2. 彻底清掉该 Compose 项目残留的容器与网络（让 Compose 重新创建网络）：
-   - `docker compose -f docker-compose.prod.yml down --remove-orphans`
-3. 保险起见，删除同名残留网络（如果存在）：
-   - `docker network rm open-notebook_default || true`
-4. 重新启动：
-   - `docker compose -f docker-compose.prod.yml up -d --remove-orphans`
-5. 验证：
-   - `docker network ls | grep open-notebook_default`
-   - `docker compose -f docker-compose.prod.yml ps`
+## 目标
+- 让 Docker 有足够的“可分配网段池”去创建多个 Compose bridge 网络。
+- 避免与公司内网 `172.16.0.0/16`（你服务器是 `172.16.11.41`）发生冲突。
 
-## 如果仍然复现（更底层不一致）
-- 重启 Docker 服务让网络状态重建，然后再执行“down → up”：
+## 修复方案（推荐：调整 daemon.json + 重启 Docker）
+### 1) 修改 /etc/docker/daemon.json
+- 做两件事：
+  1. 把 `default-address-pools` 扩大到至少一个 /16，并按 /24 切割（这样最多能切出 256 个网络）。
+  2. 让 `bip` 不要占用同一个 pool（也避免占用公司内网常见段）。
+
+- 推荐配置示例（优先用 10.240/16、10.241/16，通常不和内网冲突）：
+```json
+{
+  "bip": "10.255.255.1/24",
+  "default-address-pools": [
+    { "base": "10.240.0.0/16", "size": 24 },
+    { "base": "10.241.0.0/16", "size": 24 }
+  ],
+  "registry-mirrors": [
+    "https://docker.1ms.run",
+    "https://docker.anyhub.us.kg",
+    "https://dockerhub.jobcher.com",
+    "https://dockerhub.icu"
+  ]
+}
+```
+- 你现在 mirrors 的值里带了反引号和空格（例如 `" `https://...` "`），严格来说虽然还是字符串，但会导致镜像源 URL 不可用；建议一并改成上面这种“干净 URL”。
+
+### 2) 重启 Docker 服务
+- 让新地址池生效：
   - `sudo systemctl restart docker`
 
-## 我将对脚本做的改进（避免下次 restart 再踩坑）
-- 调整 `restart` 行为：先尝试 `compose up -d`；若捕获到“network … does not exist/failed to set up container networking”类错误，则自动执行一次 `compose down --remove-orphans` + `compose up -d --remove-orphans`。
-- 新增一个显式命令（例如 `recreate`）：一键做“down → 删除默认网络（若存在）→ up”，用于运维场景快速自愈。
+### 3) 清掉本项目残留网络并重新创建
+- 你已经做过方案A，但在改完地址池并重启后，再做一次最稳：
+  - `docker compose -f docker-compose.prod.yml down --remove-orphans`
+  - `docker network prune`（只会删掉未使用网络）
+  - `docker compose -f docker-compose.prod.yml up -d --remove-orphans`
 
-确认后我会按上述方案修改脚本，并给出可直接复制到服务器执行的命令清单。
+## 验证点
+- `docker compose ... up -d` 能成功创建 `open-notebook_default`。
+- `docker network ls` 中能看到该网络，且 `docker network inspect open-notebook_default` 里子网不再是 `192.168.100.0/24`（而是 10.240.x.0/24 一类）。
+
+## 备选（如果公司网络已使用大量 10.x 段）
+- 把 `default-address-pools` 换成 `172.31.0.0/16`、`172.30.0.0/16`（避开 172.16/16）。
+
+## 我接下来会做什么（你确认后）
+- 我会把这套“地址池配置原因 + 推荐 daemon.json 模板 + 需要避开的网段”的说明补充到部署文档/脚本输出里，避免你之后再踩坑。
