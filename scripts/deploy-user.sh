@@ -111,8 +111,8 @@ generate_compose() {
         "${TEMPLATE_FILE}" > "${compose_file}"
     
     # 在 environment 下面插入 API_URL
-    # 使用 sed 在 - HTTP_PROXY= 这一行前面插入
-    sed -i '' "s|      - HTTP_PROXY=|      - API_URL=${api_url}\n      - HTTP_PROXY=|" "${compose_file}"
+    # 使用临时文件方案，兼容 Linux 和 macOS
+    sed "s|      - HTTP_PROXY=|      - API_URL=${api_url}\n      - HTTP_PROXY=|" "${compose_file}" > "${compose_file}.tmp" && mv "${compose_file}.tmp" "${compose_file}"
         
     # 确保 volume 路径是相对的（模板里本来就是 ./surreal_data，在子目录里正好对应 users/name/surreal_data）
 }
