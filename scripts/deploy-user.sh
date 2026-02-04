@@ -45,6 +45,20 @@ init_system() {
     if [[ ! -f "${PORTS_MAP}" ]]; then
         touch "${PORTS_MAP}"
     fi
+
+    # 检查本地镜像是否存在，不存在则构建
+    if ! docker image inspect open_notebook:local >/dev/null 2>&1; then
+        warn "本地镜像 open_notebook:local 不存在，开始构建..."
+        # 尝试使用 Makefile 构建
+        if [[ -f "${ROOT_DIR}/Makefile" ]]; then
+            info "发现 Makefile，使用 make docker-build-local 构建..."
+            (cd "${ROOT_DIR}" && make docker-build-local) || error "构建失败，请检查 Docker 环境或网络"
+        else
+            info "未找到 Makefile，使用 docker build 构建..."
+            docker build -t open_notebook:local "${ROOT_DIR}" || error "构建失败，请检查 Docker 环境或网络"
+        fi
+        success "镜像构建成功！"
+    fi
 }
 
 # 获取或分配端口
