@@ -139,3 +139,6 @@ specs/
 
 **/*.local.md
 .lan-run
+
+# User deployment data
+users/
