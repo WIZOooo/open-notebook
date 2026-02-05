@@ -55,8 +55,14 @@ init_system() {
             (cd "${ROOT_DIR}" && make docker-build-local) || error "构建失败，请检查 Docker 环境或网络"
         else
             info "使用 docker build 构建..."
+            # 增加超时时间设置，防止 uv sync 网络超时
+            # 使用 UV_HTTP_TIMEOUT=300 (5分钟)
             # 这里的 tag 必须和 docker-compose.prod.yml 里的一致
-            docker build -t lfnovo/open_notebook:v1.3.0 -t open_notebook:local "${ROOT_DIR}" || error "构建失败，请检查 Docker 环境或网络"
+            docker build \
+                --build-arg UV_HTTP_TIMEOUT=300 \
+                -t lfnovo/open_notebook:v1.3.0 \
+                -t open_notebook:local \
+                "${ROOT_DIR}" || error "构建失败，请检查 Docker 环境或网络"
         fi
         success "镜像构建成功！"
     fi
